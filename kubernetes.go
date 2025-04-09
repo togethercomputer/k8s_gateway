@@ -418,9 +418,11 @@ func serviceHostnameIndexFunc(obj interface{}) ([]string, error) {
 
 	hostname := service.Name + "." + service.Namespace
 	hostnames := []string{}
-	if annotation, exists := checkServiceAnnotation(hostnameAnnotationKey, service, true); exists {
-		hostnames = []string{annotation}
-	} else if annotation, exists := checkServiceAnnotation(externalDnsHostnameAnnotationKey, service, false); exists {
+	if annotation, exists := checkServiceAnnotation(hostnameAnnotationKey, service); exists {
+		if checkDomainValid(annotation) {
+			hostnames = []string{annotation}
+		}
+	} else if annotation, exists := checkServiceAnnotation(externalDnsHostnameAnnotationKey, service); exists {
 		for _, hostname := range splitHostnameAnnotation(annotation) {
 			if checkDomainValid(hostname) {
 				hostnames = append(hostnames, hostname)
@@ -439,14 +441,8 @@ func splitHostnameAnnotation(annotation string) []string {
 	return strings.Split(strings.ReplaceAll(annotation, " ", ""), ",")
 }
 
-func checkServiceAnnotation(annotation string, service *core.Service, validate bool) (string, bool) {
+func checkServiceAnnotation(annotation string, service *core.Service) (string, bool) {
 	if annotationValue, exists := service.Annotations[annotation]; exists {
-		if validate {
-			// checking if domain is valid
-			if valid := checkDomainValid(annotationValue); valid {
-				return strings.ToLower(annotationValue), true
-			}
-		}
 		return strings.ToLower(annotationValue), true
 	}
 
