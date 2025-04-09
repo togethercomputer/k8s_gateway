@@ -417,15 +417,22 @@ func serviceHostnameIndexFunc(obj interface{}) ([]string, error) {
 	}
 
 	hostname := service.Name + "." + service.Namespace
+	hostnames := []string{}
 	if annotation, exists := checkServiceAnnotation(hostnameAnnotationKey, service); exists {
-		hostname = annotation
+		hostnames = []string{annotation}
 	} else if annotation, exists := checkServiceAnnotation(externalDnsHostnameAnnotationKey, service); exists {
-		hostname = annotation
+		hostnames = splitHostnameAnnotation(annotation)
+	} else {
+		hostnames = []string{hostname}
 	}
 
 	log.Debugf("Adding index %s for service %s", hostname, service.Name)
 
-	return []string{hostname}, nil
+	return hostnames, nil
+}
+
+func splitHostnameAnnotation(annotation string) []string {
+	return strings.Split(strings.ReplaceAll(annotation, " ", ""), ",")
 }
 
 func checkServiceAnnotation(annotation string, service *core.Service) (string, bool) {
