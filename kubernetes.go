@@ -417,33 +417,49 @@ func serviceHostnameIndexFunc(obj interface{}) ([]string, error) {
 	}
 
 	hostname := service.Name + "." + service.Namespace
+	hostnames := []string{}
 	if annotation, exists := checkServiceAnnotation(hostnameAnnotationKey, service); exists {
-		hostname = annotation
+		if checkDomainValid(annotation) {
+			hostnames = []string{annotation}
+		}
 	} else if annotation, exists := checkServiceAnnotation(externalDnsHostnameAnnotationKey, service); exists {
-		hostname = annotation
+		for _, hostname := range splitHostnameAnnotation(annotation) {
+			if checkDomainValid(hostname) {
+				hostnames = append(hostnames, hostname)
+			}
+		}
+	} else {
+		hostnames = []string{hostname}
 	}
 
 	log.Debugf("Adding index %s for service %s", hostname, service.Name)
 
-	return []string{hostname}, nil
+	return hostnames, nil
+}
+
+func splitHostnameAnnotation(annotation string) []string {
+	return strings.Split(strings.ReplaceAll(annotation, " ", ""), ",")
 }
 
 func checkServiceAnnotation(annotation string, service *core.Service) (string, bool) {
 	if annotationValue, exists := service.Annotations[annotation]; exists {
-		// checking the hostname length limits
-		if _, ok := dns.IsDomainName(annotationValue); ok {
-			// checking RFC 1123 conformance (same as metadata labels)
-			if valid := isdns1123Hostname(annotationValue); valid {
-				return strings.ToLower(annotationValue), true
-			} else {
-				log.Infof("RFC 1123 conformance failed for FQDN: %s", annotationValue)
-			}
-		} else {
-			log.Infof("Invalid FQDN length: %s", annotationValue)
-		}
+		return strings.ToLower(annotationValue), true
 	}
 
 	return "", false
+}
+
+func checkDomainValid(domain string) bool {
+	if _, ok := dns.IsDomainName(domain); ok {
+		// checking RFC 1123 conformance (same as metadata labels)
+		if valid := isdns1123Hostname(domain); valid {
+			return true
+		}
+		log.Infof("RFC 1123 conformance failed for FQDN: %s", domain)
+	} else {
+		log.Infof("Invalid FQDN length: %s", domain)
+	}
+	return false
 }
 
 func virtualServerHostnameIndexFunc(obj interface{}) ([]string, error) {
