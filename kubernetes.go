@@ -421,18 +421,18 @@ func serviceHostnameIndexFunc(obj interface{}) ([]string, error) {
 	if annotation, exists := checkServiceAnnotation(hostnameAnnotationKey, service); exists {
 		if checkDomainValid(annotation) {
 			hostnames = []string{annotation}
+			log.Debugf("Adding index %s for service %s", annotation, service.Name)
 		}
 	} else if annotation, exists := checkServiceAnnotation(externalDnsHostnameAnnotationKey, service); exists {
 		for _, hostname := range splitHostnameAnnotation(annotation) {
 			if checkDomainValid(hostname) {
 				hostnames = append(hostnames, hostname)
+				log.Debugf("Adding index %s for service %s", hostname, service.Name)
 			}
 		}
 	} else {
 		hostnames = []string{hostname}
 	}
-
-	log.Debugf("Adding index %s for service %s", hostname, service.Name)
 
 	return hostnames, nil
 }
