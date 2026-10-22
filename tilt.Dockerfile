@@ -1,11 +1,7 @@
-FROM debian:stable-slim
+FROM alpine:3.23
 
-RUN apt-get update && apt-get -uy upgrade
-RUN apt-get -y install ca-certificates && update-ca-certificates
+RUN apk add --no-cache ca-certificates
 
-FROM golang:1.26.10-alpine
-
-COPY --from=0 /etc/ssl/certs /etc/ssl/certs
 COPY coredns /
 
 EXPOSE 53 53/udp
