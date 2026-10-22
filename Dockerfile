@@ -26,7 +26,7 @@ RUN go build -ldflags "${LDFLAGS}" -o coredns cmd/coredns.go
 
 FROM scratch
 
-COPY --from=docker.io/library/alpine:3.23 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /build/coredns .
 
 EXPOSE 53 53/udp
