@@ -61,8 +61,8 @@ func newKubeController(ctx context.Context, c *kubernetes.Clientset, gw *gateway
 	if existGatewayCRDs(ctx, gw) {
 		gatewayController := cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc:  gatewayLister(ctx, ctrl.gwClient, core.NamespaceAll),
-				WatchFunc: gatewayWatcher(ctx, ctrl.gwClient, core.NamespaceAll),
+				ListWithContextFunc:  gatewayLister(ctx, ctrl.gwClient, core.NamespaceAll),
+				WatchFuncWithContext: gatewayWatcher(ctx, ctrl.gwClient, core.NamespaceAll),
 			},
 			&gatewayapi_v1.Gateway{},
 			defaultResyncPeriod,
@@ -73,8 +73,8 @@ func newKubeController(ctx context.Context, c *kubernetes.Clientset, gw *gateway
 		if resource := lookupResource("HTTPRoute"); resource != nil {
 			httpRouteController := cache.NewSharedIndexInformer(
 				&cache.ListWatch{
-					ListFunc:  httpRouteLister(ctx, ctrl.gwClient, core.NamespaceAll),
-					WatchFunc: httpRouteWatcher(ctx, ctrl.gwClient, core.NamespaceAll),
+					ListWithContextFunc:  httpRouteLister(ctx, ctrl.gwClient, core.NamespaceAll),
+					WatchFuncWithContext: httpRouteWatcher(ctx, ctrl.gwClient, core.NamespaceAll),
 				},
 				&gatewayapi_v1.HTTPRoute{},
 				defaultResyncPeriod,
@@ -87,8 +87,8 @@ func newKubeController(ctx context.Context, c *kubernetes.Clientset, gw *gateway
 		if resource := lookupResource("TLSRoute"); resource != nil {
 			tlsRouteController := cache.NewSharedIndexInformer(
 				&cache.ListWatch{
-					ListFunc:  tlsRouteLister(ctx, ctrl.gwClient, core.NamespaceAll),
-					WatchFunc: tlsRouteWatcher(ctx, ctrl.gwClient, core.NamespaceAll),
+					ListWithContextFunc:  tlsRouteLister(ctx, ctrl.gwClient, core.NamespaceAll),
+					WatchFuncWithContext: tlsRouteWatcher(ctx, ctrl.gwClient, core.NamespaceAll),
 				},
 				&gatewayapi_v1alpha2.TLSRoute{},
 				defaultResyncPeriod,
@@ -101,8 +101,8 @@ func newKubeController(ctx context.Context, c *kubernetes.Clientset, gw *gateway
 		if resource := lookupResource("GRPCRoute"); resource != nil {
 			grpcRouteController := cache.NewSharedIndexInformer(
 				&cache.ListWatch{
-					ListFunc:  grpcRouteLister(ctx, ctrl.gwClient, core.NamespaceAll),
-					WatchFunc: grpcRouteWatcher(ctx, ctrl.gwClient, core.NamespaceAll),
+					ListWithContextFunc:  grpcRouteLister(ctx, ctrl.gwClient, core.NamespaceAll),
+					WatchFuncWithContext: grpcRouteWatcher(ctx, ctrl.gwClient, core.NamespaceAll),
 				},
 				&gatewayapi_v1alpha2.GRPCRoute{},
 				defaultResyncPeriod,
@@ -117,8 +117,8 @@ func newKubeController(ctx context.Context, c *kubernetes.Clientset, gw *gateway
 		if resource := lookupResource("VirtualServer"); resource != nil {
 			virtualServerController := cache.NewSharedIndexInformer(
 				&cache.ListWatch{
-					ListFunc:  virtualServerLister(ctx, ctrl.nginxClient, core.NamespaceAll),
-					WatchFunc: virtualServerWatcher(ctx, ctrl.nginxClient, core.NamespaceAll),
+					ListWithContextFunc:  virtualServerLister(ctx, ctrl.nginxClient, core.NamespaceAll),
+					WatchFuncWithContext: virtualServerWatcher(ctx, ctrl.nginxClient, core.NamespaceAll),
 				},
 				&nginx_v1.VirtualServer{},
 				defaultResyncPeriod,
@@ -132,8 +132,8 @@ func newKubeController(ctx context.Context, c *kubernetes.Clientset, gw *gateway
 	if resource := lookupResource("Ingress"); resource != nil {
 		ingressController := cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc:  ingressLister(ctx, ctrl.client, core.NamespaceAll),
-				WatchFunc: ingressWatcher(ctx, ctrl.client, core.NamespaceAll),
+				ListWithContextFunc:  ingressLister(ctx, ctrl.client, core.NamespaceAll),
+				WatchFuncWithContext: ingressWatcher(ctx, ctrl.client, core.NamespaceAll),
 			},
 			&networking.Ingress{},
 			defaultResyncPeriod,
@@ -146,8 +146,8 @@ func newKubeController(ctx context.Context, c *kubernetes.Clientset, gw *gateway
 	if resource := lookupResource("Service"); resource != nil {
 		serviceController := cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc:  serviceLister(ctx, ctrl.client, core.NamespaceAll),
-				WatchFunc: serviceWatcher(ctx, ctrl.client, core.NamespaceAll),
+				ListWithContextFunc:  serviceLister(ctx, ctrl.client, core.NamespaceAll),
+				WatchFuncWithContext: serviceWatcher(ctx, ctrl.client, core.NamespaceAll),
 			},
 			&core.Service{},
 			defaultResyncPeriod,
@@ -257,86 +257,86 @@ func (gw *Gateway) getClientConfig() (*rest.Config, error) {
 	return rest.InClusterConfig()
 }
 
-func httpRouteLister(ctx context.Context, c gatewayClient.Interface, ns string) func(metav1.ListOptions) (runtime.Object, error) {
-	return func(opts metav1.ListOptions) (runtime.Object, error) {
+func httpRouteLister(ctx context.Context, c gatewayClient.Interface, ns string) cache.ListWithContextFunc {
+	return func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 		return c.GatewayV1().HTTPRoutes(ns).List(ctx, opts)
 	}
 }
 
-func tlsRouteLister(ctx context.Context, c gatewayClient.Interface, ns string) func(metav1.ListOptions) (runtime.Object, error) {
-	return func(opts metav1.ListOptions) (runtime.Object, error) {
+func tlsRouteLister(ctx context.Context, c gatewayClient.Interface, ns string) cache.ListWithContextFunc {
+	return func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 		return c.GatewayV1alpha2().TLSRoutes(ns).List(ctx, opts)
 	}
 }
 
-func grpcRouteLister(ctx context.Context, c gatewayClient.Interface, ns string) func(metav1.ListOptions) (runtime.Object, error) {
-	return func(opts metav1.ListOptions) (runtime.Object, error) {
+func grpcRouteLister(ctx context.Context, c gatewayClient.Interface, ns string) cache.ListWithContextFunc {
+	return func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 		return c.GatewayV1alpha2().GRPCRoutes(ns).List(ctx, opts)
 	}
 }
 
-func gatewayLister(ctx context.Context, c gatewayClient.Interface, ns string) func(metav1.ListOptions) (runtime.Object, error) {
-	return func(opts metav1.ListOptions) (runtime.Object, error) {
+func gatewayLister(ctx context.Context, c gatewayClient.Interface, ns string) cache.ListWithContextFunc {
+	return func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 		return c.GatewayV1().Gateways(ns).List(ctx, opts)
 	}
 }
 
-func ingressLister(ctx context.Context, c kubernetes.Interface, ns string) func(metav1.ListOptions) (runtime.Object, error) {
-	return func(opts metav1.ListOptions) (runtime.Object, error) {
+func ingressLister(ctx context.Context, c kubernetes.Interface, ns string) cache.ListWithContextFunc {
+	return func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 		return c.NetworkingV1().Ingresses(ns).List(ctx, opts)
 	}
 }
 
-func serviceLister(ctx context.Context, c kubernetes.Interface, ns string) func(metav1.ListOptions) (runtime.Object, error) {
-	return func(opts metav1.ListOptions) (runtime.Object, error) {
+func serviceLister(ctx context.Context, c kubernetes.Interface, ns string) cache.ListWithContextFunc {
+	return func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 		return c.CoreV1().Services(ns).List(ctx, opts)
 	}
 }
 
-func virtualServerLister(ctx context.Context, c k8s_nginx.Interface, ns string) func(metav1.ListOptions) (runtime.Object, error) {
-	return func(opts metav1.ListOptions) (runtime.Object, error) {
+func virtualServerLister(ctx context.Context, c k8s_nginx.Interface, ns string) cache.ListWithContextFunc {
+	return func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 		return c.K8sV1().VirtualServers(ns).List(ctx, opts)
 	}
 }
 
-func httpRouteWatcher(ctx context.Context, c gatewayClient.Interface, ns string) func(metav1.ListOptions) (watch.Interface, error) {
-	return func(opts metav1.ListOptions) (watch.Interface, error) {
+func httpRouteWatcher(ctx context.Context, c gatewayClient.Interface, ns string) cache.WatchFuncWithContext {
+	return func(_ context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 		return c.GatewayV1().HTTPRoutes(ns).Watch(ctx, opts)
 	}
 }
 
-func tlsRouteWatcher(ctx context.Context, c gatewayClient.Interface, ns string) func(metav1.ListOptions) (watch.Interface, error) {
-	return func(opts metav1.ListOptions) (watch.Interface, error) {
+func tlsRouteWatcher(ctx context.Context, c gatewayClient.Interface, ns string) cache.WatchFuncWithContext {
+	return func(_ context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 		return c.GatewayV1alpha2().TLSRoutes(ns).Watch(ctx, opts)
 	}
 }
 
-func grpcRouteWatcher(ctx context.Context, c gatewayClient.Interface, ns string) func(metav1.ListOptions) (watch.Interface, error) {
-	return func(opts metav1.ListOptions) (watch.Interface, error) {
+func grpcRouteWatcher(ctx context.Context, c gatewayClient.Interface, ns string) cache.WatchFuncWithContext {
+	return func(_ context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 		return c.GatewayV1alpha2().GRPCRoutes(ns).Watch(ctx, opts)
 	}
 }
 
-func gatewayWatcher(ctx context.Context, c gatewayClient.Interface, ns string) func(metav1.ListOptions) (watch.Interface, error) {
-	return func(opts metav1.ListOptions) (watch.Interface, error) {
+func gatewayWatcher(ctx context.Context, c gatewayClient.Interface, ns string) cache.WatchFuncWithContext {
+	return func(_ context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 		return c.GatewayV1().Gateways(ns).Watch(ctx, opts)
 	}
 }
 
-func ingressWatcher(ctx context.Context, c kubernetes.Interface, ns string) func(metav1.ListOptions) (watch.Interface, error) {
-	return func(opts metav1.ListOptions) (watch.Interface, error) {
+func ingressWatcher(ctx context.Context, c kubernetes.Interface, ns string) cache.WatchFuncWithContext {
+	return func(_ context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 		return c.NetworkingV1().Ingresses(ns).Watch(ctx, opts)
 	}
 }
 
-func serviceWatcher(ctx context.Context, c kubernetes.Interface, ns string) func(metav1.ListOptions) (watch.Interface, error) {
-	return func(opts metav1.ListOptions) (watch.Interface, error) {
+func serviceWatcher(ctx context.Context, c kubernetes.Interface, ns string) cache.WatchFuncWithContext {
+	return func(_ context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 		return c.CoreV1().Services(ns).Watch(ctx, opts)
 	}
 }
 
-func virtualServerWatcher(ctx context.Context, c k8s_nginx.Interface, ns string) func(metav1.ListOptions) (watch.Interface, error) {
-	return func(opts metav1.ListOptions) (watch.Interface, error) {
+func virtualServerWatcher(ctx context.Context, c k8s_nginx.Interface, ns string) cache.WatchFuncWithContext {
+	return func(_ context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 		return c.K8sV1().VirtualServers(ns).Watch(ctx, opts)
 	}
 }

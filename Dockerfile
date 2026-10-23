@@ -1,4 +1,4 @@
-FROM --platform=${BUILDPLATFORM} docker.io/library/golang:1.21.5 as builder
+FROM --platform=${BUILDPLATFORM} docker.io/library/golang:1.26.10-alpine3.23 AS builder
 
 ARG LDFLAGS
 
@@ -24,14 +24,9 @@ ENV GOOS=$TARGETOS
 
 RUN go build -ldflags "${LDFLAGS}" -o coredns cmd/coredns.go
 
-FROM debian:stable-slim
-
-RUN apt-get update && apt-get -uy upgrade
-RUN apt-get -y install ca-certificates && update-ca-certificates
-
 FROM scratch
 
-COPY --from=0 /etc/ssl/certs /etc/ssl/certs
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /build/coredns .
 
 EXPOSE 53 53/udp

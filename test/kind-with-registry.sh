@@ -37,7 +37,7 @@ running="$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || t
 if [ "${running}" != 'true' ]; then
   docker run \
     -d --restart=always -p "${reg_port}:5000" --name "${reg_name}" \
-    registry:2
+    registry:3
 fi
 
 reg_host="${reg_name}"
